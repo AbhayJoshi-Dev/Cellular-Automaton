@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.21.2)
+cmake_minimum_required(VERSION 3.25.0)
 
 project(Cellular-Automaton)
 
 set(DEPS_DIR ${CMAKE_SOURCE_DIR}/build/external)
+
+set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(external/SDL)
 
@@ -14,8 +16,4 @@ add_executable(Cellular-Automaton ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(Cellular-Automaton PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/
                                             ${CMAKE_CURRENT_SOURCE_DIR}/external/SDL/include/)
 
-target_link_libraries(Cellular-Automaton SDL2 SDL2main)
-
-add_custom_command(TARGET Cellular-Automaton POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${DEPS_DIR}/SDL/Debug/SDL2d.dll"
-                    $<TARGET_FILE_DIR:Cellular-Automaton>)
+target_link_libraries(Cellular-Automaton SDL2-static SDL2main)
