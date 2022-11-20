@@ -5,7 +5,7 @@ Game::Game()
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		std::cout << "SDL could not initialize! SDL Error: " << SDL_GetError() << std::endl;
 
-	m_window = SDL_CreateWindow("Cellular Automaton", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_SIZE, SCREEN_SIZE, SDL_WINDOW_SHOWN);
+	m_window = SDL_CreateWindow("Cellular Automaton", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
 	if (m_window == NULL)
 		std::cout << "Window could not be created! SDL Error: " << SDL_GetError() << std::endl;
@@ -14,6 +14,15 @@ Game::Game()
 
 	if (m_renderer == NULL)
 		std::cout << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
+
+	// Setup ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplSDL2_InitForSDLRenderer(m_window, m_renderer);
+	ImGui_ImplSDLRenderer_Init(m_renderer);
 
 
 	m_quit = false;
@@ -28,6 +37,10 @@ Game::Game()
 
 Game::~Game()
 {
+	ImGui_ImplSDLRenderer_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+
 	SDL_DestroyRenderer(m_renderer);
 	SDL_DestroyWindow(m_window);
 
@@ -42,6 +55,7 @@ void Game::GameLoop()
 
 		while (SDL_PollEvent(&m_event) != 0)
 		{
+			ImGui_ImplSDL2_ProcessEvent(&m_event);
 			if (m_event.type == SDL_QUIT)
 				m_quit = true;
 			if (m_event.type == SDL_MOUSEBUTTONDOWN)
@@ -84,16 +98,39 @@ void Game::GameLoop()
 
 void Game::Update()
 {
+	ImGui_ImplSDLRenderer_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Cellular Automaton", 0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+	ImGui::SetWindowPos(ImVec2(128 * 6, 0));
+	ImGui::SetWindowSize(ImVec2(238, 768));
+	if (ImGui::Button("Save"))
+	{
+		std::cout << "Saved" << std::endl;
+	}
+	ImGui::End();
+
+
 	if (m_leftBottonHold)
 		m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 1;
 	else if (m_rightBottonHold)
 		m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 0;
+
+	const Uint8* keystate = SDL_GetKeyboardState(NULL);
+
+	if (keystate[SDL_SCANCODE_RETURN])
+	{
+		Life();
+	}
 }
 
 void Game::Render()
 {
-	SDL_Rect vertical_rect = { 0, 0, 1, SCREEN_SIZE };
-	SDL_Rect horizontal_rect = { 0, 0, SCREEN_SIZE, 1 };
+	ImGui::Render();
+
+	SDL_Rect vertical_rect = { 0, 0, 1, SCREEN_HEIGHT };
+	SDL_Rect horizontal_rect = { 0, 0, SCREEN_WIDTH, 1 };
 
 
 	SDL_RenderClear(m_renderer);
@@ -132,19 +169,37 @@ void Game::Render()
 	}
 
 	SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+
+	ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+
 	SDL_RenderPresent(m_renderer);
 }
 
 void Game::Life()
 {
+	for (int y = 0; y < NUM_CELLS; y++)
+	{
+		for (int x = 0; x < NUM_CELLS; x++)
+		{
+			m_backupCells[y][x] = m_cells[y][x];
+		}
+	}
+
 	int neighbours = 0;
 	for (int y = 0; y < NUM_CELLS; y++)
 	{
 		for (int x = 0; x < NUM_CELLS; x++)
 		{
-			neighbours = m_cells[y][x - 1] + m_cells[y][x + 1] + m_cells[y - 1][x] + m_cells[y + 1][x];
+			neighbours = m_backupCells[y - 1][x - 1] + m_backupCells[y - 1][x] + m_backupCells[y - 1][x + 1] +
+				m_backupCells[y][x - 1] + m_backupCells[y][x + 1] +
+				m_backupCells[y + 1][x - 1] + m_backupCells[y + 1][x] + m_backupCells[y + 1][x + 1];
+
+			if (neighbours < 2)
+				m_cells[y][x] = 0;
+			else if (neighbours > 3)
+				m_cells[y][x] = 0;
+			else if (neighbours == 3)
+				m_cells[y][x] = 1;
 		}
 	}
-
-	std::cout << neighbours << std::endl;
 }
