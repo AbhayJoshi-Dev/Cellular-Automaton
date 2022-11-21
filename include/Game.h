@@ -5,6 +5,7 @@
 #include<imgui.h>
 #include<imgui_impl_sdl.h>
 #include<imgui_impl_sdlrenderer.h>
+#include<string>
 
 #include"Timer.h"
 
@@ -45,4 +46,11 @@ private:
 
 	bool m_leftBottonHold;
 	bool m_rightBottonHold;
+
+	bool m_canDraw;
+
+	bool m_pause;
+	bool m_play;
+	int m_speed;
+	int m_generation;
 };

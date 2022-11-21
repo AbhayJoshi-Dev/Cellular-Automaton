@@ -1,6 +1,7 @@
 #include"Game.h"
 
 Game::Game()
+	:m_quit(false), m_countedFrames(0), m_rightBottonHold(false), m_leftBottonHold(false), m_canDraw(false), m_pause(false), m_speed(5)
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		std::cout << "SDL could not initialize! SDL Error: " << SDL_GetError() << std::endl;
@@ -24,15 +25,10 @@ Game::Game()
 	ImGui_ImplSDL2_InitForSDLRenderer(m_window, m_renderer);
 	ImGui_ImplSDLRenderer_Init(m_renderer);
 
-
-	m_quit = false;
-
-	m_countedFrames = 0;
 	m_fpsTimer.Start();
-	m_mouseX = 0;
-	m_mouseY = 0;
-	m_rightBottonHold = false;
-	m_leftBottonHold = false;
+
+	m_generation = 0;
+	m_play = false;
 }
 
 Game::~Game()
@@ -103,19 +99,91 @@ void Game::Update()
 	ImGui::NewFrame();
 
 	ImGui::Begin("Cellular Automaton", 0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+
 	ImGui::SetWindowPos(ImVec2(128 * 6, 0));
 	ImGui::SetWindowSize(ImVec2(238, 768));
-	if (ImGui::Button("Save"))
+
+	//buttons
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 30);
+
+	if (!m_pause)
 	{
-		std::cout << "Saved" << std::endl;
+		if (ImGui::Button("Run" , ImVec2(60, 30)))
+		{
+			m_pause = true;
+			m_play = true;
+		}
 	}
+	else
+	{
+		if (ImGui::Button("Pause", ImVec2(60, 30)))
+		{
+			m_play = false;
+			m_pause = false;
+		}
+	}
+
+	if (m_play)
+		Life();
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 30);
+
+	if (ImGui::Button("Step", ImVec2(60, 30)))
+	{
+		Life();
+	}
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 30);
+
+	if (ImGui::Button("Reset", ImVec2(60, 30)))
+	{
+		memset(m_cells, 0, sizeof(m_cells));
+		m_generation = 0;
+	}
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 20);
+	ImGui::Text("Speed");
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 75);
+	ImGui::SliderInt(" ", &m_speed, 0, 100);
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 35);
+
+	ImGui::Text("Generation");
+	std::string str = std::to_string(m_generation);
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f);
+	ImGui::Text(str.c_str());
+
+	if (ImGui::IsWindowHovered() || ImGui::IsAnyItemActive())
+		m_canDraw = false;
+	else
+		m_canDraw = true;
+
 	ImGui::End();
 
-
-	if (m_leftBottonHold)
-		m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 1;
-	else if (m_rightBottonHold)
-		m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 0;
+	if (m_canDraw)
+	{
+		if (m_leftBottonHold)
+			m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 1;
+		else if (m_rightBottonHold)
+			m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 0;
+	}
 
 	const Uint8* keystate = SDL_GetKeyboardState(NULL);
 
@@ -153,7 +221,8 @@ void Game::Render()
 	m_mouseX -= m_mouseX % CELL_SIZE;
 	m_mouseY -= m_mouseY % CELL_SIZE;
 	SDL_Rect cell_rect = { m_mouseX, m_mouseY, CELL_SIZE - 1, CELL_SIZE - 1 };
-	SDL_RenderFillRect(m_renderer, &cell_rect);
+	if (m_canDraw)
+		SDL_RenderFillRect(m_renderer, &cell_rect);
 
 	//draw rect
 	for (int y = 0; y < NUM_CELLS; y++)
@@ -177,6 +246,7 @@ void Game::Render()
 
 void Game::Life()
 {
+	m_generation++;
 	for (int y = 0; y < NUM_CELLS; y++)
 	{
 		for (int x = 0; x < NUM_CELLS; x++)
