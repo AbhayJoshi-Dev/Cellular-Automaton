@@ -30,7 +30,7 @@ private:
 	const int SCREEN_WIDTH = 1000;
 	const int SCREEN_HEIGHT = 768;
 
-	const static int NUM_CELLS = 128;
+	const static int NUM_CELLS = 130;
 
 	bool m_cells[NUM_CELLS][NUM_CELLS];
 	bool m_backupCells[NUM_CELLS][NUM_CELLS];
@@ -53,4 +53,6 @@ private:
 	bool m_play;
 	int m_speed;
 	int m_generation;
+
+	float m_currentTime;
 };

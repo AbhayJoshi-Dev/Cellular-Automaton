@@ -1,7 +1,7 @@
 #include"Game.h"
 
 Game::Game()
-	:m_quit(false), m_countedFrames(0), m_rightBottonHold(false), m_leftBottonHold(false), m_canDraw(false), m_pause(false), m_speed(5)
+	:m_quit(false), m_countedFrames(0), m_rightBottonHold(false), m_leftBottonHold(false), m_canDraw(false), m_pause(false), m_speed(30)
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		std::cout << "SDL could not initialize! SDL Error: " << SDL_GetError() << std::endl;
@@ -29,6 +29,7 @@ Game::Game()
 
 	m_generation = 0;
 	m_play = false;
+	m_currentTime = 0;
 }
 
 Game::~Game()
@@ -107,6 +108,17 @@ void Game::Update()
 	ImGui::NewLine();
 	ImGui::NewLine();
 	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 35);
+
+	ImGui::Text("Generation");
+	std::string str = std::to_string(m_generation);
+	ImGui::NewLine();
+	ImGui::SameLine(238.f / 2.f - 10);
+	ImGui::Text(str.c_str());
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
 	ImGui::SameLine(238.f / 2.f - 30);
 
 	if (!m_pause)
@@ -127,7 +139,14 @@ void Game::Update()
 	}
 
 	if (m_play)
-		Life();
+	{
+		m_currentTime += (float)SCREEN_TICKS_PER_FRAME / 1000;
+		if (m_currentTime >= 1.f / m_speed)
+		{
+			Life();
+			m_currentTime = 0.f;
+		}
+	}
 
 	ImGui::NewLine();
 	ImGui::NewLine();
@@ -159,16 +178,6 @@ void Game::Update()
 	ImGui::SameLine(238.f / 2.f - 75);
 	ImGui::SliderInt(" ", &m_speed, 0, 100);
 
-	ImGui::NewLine();
-	ImGui::NewLine();
-	ImGui::NewLine();
-	ImGui::SameLine(238.f / 2.f - 35);
-
-	ImGui::Text("Generation");
-	std::string str = std::to_string(m_generation);
-	ImGui::NewLine();
-	ImGui::SameLine(238.f / 2.f);
-	ImGui::Text(str.c_str());
 
 	if (ImGui::IsWindowHovered() || ImGui::IsAnyItemActive())
 		m_canDraw = false;
@@ -183,13 +192,6 @@ void Game::Update()
 			m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 1;
 		else if (m_rightBottonHold)
 			m_cells[m_mouseY / CELL_SIZE][m_mouseX / CELL_SIZE] = 0;
-	}
-
-	const Uint8* keystate = SDL_GetKeyboardState(NULL);
-
-	if (keystate[SDL_SCANCODE_RETURN])
-	{
-		Life();
 	}
 }
 
