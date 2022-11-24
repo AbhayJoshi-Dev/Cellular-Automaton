@@ -1,6 +1,6 @@
 # Cellular Automaton
 
-[Conway's game of life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) written in C++ and [SDL2](https://www.libsdl.org/)
+[Conway's game of life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) written in C++ using [SDL2](https://www.libsdl.org/) and [imgui](https://github.com/ocornut/imgui)
 
 ## Demo
 ![](https://i.imgur.com/aPlyADp.gif)
